@@ -138,31 +138,118 @@ namespace ScoringEngineTeamGenerator
 
 			int propCount = teams[0].services[serviceIndex].environment.matchingContents[envCombIndex].properties.Count;
 
-			if (envDGV.Rows.Count-1 > propCount)
+			for(int i = 0; i < teams.Count; i++)
 			{
-				for(int i = 0; i < teams.Count; i++)
+				if(envDGV.Rows.Count - 1 > propCount)
 				{
-					Property property = new Property();
-					property.name = envDGV[0, e.RowIndex].Value.ToString();
-					property.value = envDGV[1, e.RowIndex].Value.ToString();
-
-					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties.Add(property);
+					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties.Add(new Property());
 				}
+
+				//figuring out which modified field needs to be changed
+				if (e.ColumnIndex.Equals(0))
+					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].name = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
+				else
+					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].value = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
 			}
-			else
+
+		}
+
+		private void AcctDGV_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+		{
+			DataGridView acctDGV = (sender as DataGridView);
+			FlowLayoutPanel parentContainer = acctDGV.Parent as FlowLayoutPanel;
+			DataGridView serviceDGV = parentContainer.Controls[0] as DataGridView;
+
+			int serviceIndex = serviceDGV.SelectedCells[0].RowIndex;
+
+			int acctCount = teams[0].services[serviceIndex].accounts.Count;
+
+			for(int i = 0; i < teams.Count; i++)
 			{
-				for (int i = 0; i < teams.Count; i++)
+				if(acctDGV.Rows.Count - 1 > acctCount)
 				{
-					//figuring out which modified field needs to be changed
-					if (e.ColumnIndex.Equals(0))
-						teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].name = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
-					else
-						teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].value = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
+					teams[i].services[serviceIndex].accounts.Add(new User());
+				}
+
+				if (e.ColumnIndex.Equals(0))
+				{
+					teams[i].services[serviceIndex].accounts[e.RowIndex].Username = acctDGV[0, e.RowIndex].Value.ToString();
+				}
+				else
+				{
+					teams[i].services[serviceIndex].accounts[e.RowIndex].Password = acctDGV[1, e.RowIndex].Value.ToString();
+				}
+
+			}
+		}
+
+		private void ServiceDGV_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+		{
+			DataGridView servDGV = (sender as DataGridView);
+			FlowLayoutPanel parentContainer = servDGV.Parent as FlowLayoutPanel;
+
+			int serviceIndex = servDGV.SelectedCells[0].RowIndex;
+
+			int serviceCount = teams[0].services.Count;
+			
+			for(int i = 0;  i < teams.Count; i++)
+			{
+				if(servDGV.Rows.Count - 1 > serviceCount)
+				{
+					teams[i].services.Add(new Service());
+					
+				}
+				string value = "";
+				if ( !(servDGV[e.ColumnIndex, e.RowIndex].Value is null))
+					value = servDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
+
+				switch (e.ColumnIndex)
+				{
+					case 0:
+						teams[i].services[serviceIndex].name = value;
+
+						break;
+					case 1:
+						teams[i].services[serviceIndex].checkName = value;
+						break;
+					case 2:
+						if(tc_TeamTabs.SelectedIndex == i)
+							teams[i].services[serviceIndex].host = value;
+						break;
+					case 3:
+						teams[i].services[serviceIndex].port = value;
+						break;
+					case 4:
+						teams[i].services[serviceIndex].points = value;
+						break;
+					default:
+						break;
+				}
+				//							Hard coded values...    Main FLP	Second FLP	DataGridView
+				DataGridView teamServDGV = tc_TeamTabs.TabPages[i].Controls[0].Controls[7].Controls[0] as DataGridView;
+				teamServDGV.Rows.Clear();
+				for (int j = 0; j < teams[i].services.Count; j++)
+				{
+					teamServDGV.Rows.Add(new object[] {
+					teams[i].services[j].name,
+					teams[i].services[j].checkName,
+					 teams[i].services[j].host,
+					 teams[i].services[j].port,
+					 teams[i].services[j].points
+				});
 				}
 			}
 
 		}
 
+		/*
+		 * 
+		 * 
+		 * GENERATE FUNCTIONS
+		 *		THESE FUNCTIONS CREATE A VARIETY OF OBJECTS, MOSTLY UI CONTROLS
+		 * 
+		 * 
+		 */
 		private void GenerateTeamTab(object YAML)
 		{
 			Team team = new Team(YAML);
@@ -224,27 +311,25 @@ namespace ScoringEngineTeamGenerator
 			innerflp.FlowDirection = FlowDirection.LeftToRight;
 			innerflp.Width = tc_TeamTabs.Width;
 
-			DataTable serviceTable = new DataTable();
-			serviceTable.Columns.Add("Name");
-			serviceTable.Columns.Add("Check Name");
-			serviceTable.Columns.Add("Host");
-			serviceTable.Columns.Add("Port");
-			serviceTable.Columns.Add("Points");
+			DataGridView serviceDGV = new DataGridView();
+			serviceDGV.Columns.Add("name", "Name");
+			serviceDGV.Columns.Add("checkName", "Check Name");
+			serviceDGV.Columns.Add("host", "Host");
+			serviceDGV.Columns.Add("port", "Port");
+			serviceDGV.Columns.Add("points", "Points");
 
 			for(int j = 0; j < teams[teamIndex].services.Count; j++)
 			{
-				DataRow row = serviceTable.NewRow();
-				row["Name"] = teams[teamIndex].services[j].name;
-				row["Check Name"] = teams[teamIndex].services[j].checkName;
-				row["Host"] = teams[teamIndex].services[j].host;
-				row["Port"] = teams[teamIndex].services[j].port;
-				row["Points"] = teams[teamIndex].services[j].points;
-				serviceTable.Rows.Add(row);
+				serviceDGV.Rows.Add(new object[] {
+					teams[teamIndex].services[j].name,
+					teams[teamIndex].services[j].checkName,
+					 teams[teamIndex].services[j].host,
+					 teams[teamIndex].services[j].port,
+					 teams[teamIndex].services[j].points
+				});
 			}
-			
-			DataGridView serviceDGV = new DataGridView();
-			serviceDGV.DataSource = serviceTable;
 			serviceDGV.SelectionChanged += ServiceDGV_SelectionChanged;
+			serviceDGV.CellEndEdit += ServiceDGV_CellEndEdit;
 
 			/*Break down of what to do:
 			 *	Select a service
@@ -261,14 +346,17 @@ namespace ScoringEngineTeamGenerator
 
 			mainListBox.Items.AddRange(new string[] {"Accounts","Environment"});
 			mainListBox.SelectedIndexChanged += MainListBox_SelectedIndexChanged;
-
+			
+			//THIS WONT WORK FIX IT WITH A DIFFERENT CONTROL
 			ComboBox envCmbox = new ComboBox();
 			envCmbox.Visible = false;
 			envCmbox.SelectedIndexChanged += EnvCmbox_SelectedIndexChanged;
+			//envCmbox.TextChanged += EnvCmbox_Leave;
 
 			DataGridView acctDGV = new DataGridView();
 			acctDGV.Columns.Add("Username", "Username");
 			acctDGV.Columns.Add("Password", "Password");
+			acctDGV.CellEndEdit += AcctDGV_CellEndEdit;
 			acctDGV.Visible = false;
 
 			DataGridView envDGV = new DataGridView();
@@ -287,6 +375,15 @@ namespace ScoringEngineTeamGenerator
 		}
 
 		
+
+		/*
+		 * 
+		 * 
+		 * SELECTION CHANGED EVENTS
+		 * 
+		 * 
+		 * 
+		 */
 
 		private void EnvCmbox_SelectedIndexChanged(object sender, EventArgs e)
 		{
