@@ -48,12 +48,47 @@ namespace ScoringEngineTeamGenerator
 					var deserializer = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
 					YAMLObj = deserializer.Deserialize(new StringReader(text));
 
-					Console.WriteLine( (((YAMLObj as List<object>)[0] as Dictionary<object, object>)["users"] as List<object>)[0] );					
+					teamAmount.Visible = true;
+					btnTemplate.Visible = false;
+
+					Console.WriteLine( (((YAMLObj as List<object>)[0] as Dictionary<object, object>)["users"] as List<object>)[0] );				
 				}
-				catch (IOException)
+				catch (IOException iox)
 				{
+					Console.WriteLine("OPEN ISSUE");
+					Console.WriteLine(iox.Message);
 				}
 			}
+		}
+
+		private void saveAsToolStripMenuItem1_Click(object sender, EventArgs e)
+		{
+			DialogResult result = saveFileDialog1.ShowDialog();
+			if(result  == DialogResult.OK)
+			{
+				string file = saveFileDialog1.FileName;
+				try
+				{
+					var serializer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+					string output = serializer.Serialize(teams);
+					using (StreamWriter fs = new StreamWriter(file))
+					{
+						fs.Write(output);
+					}
+				}
+				catch(IOException iox)
+				{
+					Console.WriteLine("SAVE ISSUE");
+					Console.WriteLine(iox.Message);
+				}
+				catch(Exception ge)
+				{
+					Console.WriteLine("SAVE ISSUE");
+					Console.WriteLine(ge.Message);
+				}
+			}
+			
+			
 		}
 
 		private void teamAmount_ValueChanged(object sender, EventArgs e)
@@ -76,8 +111,10 @@ namespace ScoringEngineTeamGenerator
 				flp.Width = tc_TeamTabs.TabPages[0].Width;
 				flp.Height = tc_TeamTabs.TabPages[0].Height;
 
-				flp.Controls.AddRange(GenerateKeyValueDuo("name",teams[i].Name));
-				flp.Controls.AddRange(GenerateKeyValueDuo("color", teams[i].Color));
+				flp.Controls.AddRange(GenerateTextLabelDuo("name",teams[i].Name));
+				(flp.Controls[1] as TextBox).TextChanged += TeamGen_TeamNameTextChanged;
+				flp.Controls.AddRange(GenerateTextLabelDuo("color", teams[i].Color));
+				(flp.Controls[3] as TextBox).TextChanged += TeamGen_TeamColorTextChanged;
 
 				//Label for the userDGV
 				Label usersLabel = new Label();
@@ -98,7 +135,7 @@ namespace ScoringEngineTeamGenerator
 			}
 			tc_TeamTabs.Visible = true;
 			teamAmount.Visible = false;
-			btnTemplate.Visible = false;
+			//btnTemplate.Visible = false;
 		}
 
 		//This method is what adds new users to the team object, as well as modifies the existing user objects.
@@ -130,26 +167,26 @@ namespace ScoringEngineTeamGenerator
 		{
 			DataGridView envDGV = (sender as DataGridView);
 			FlowLayoutPanel parentContainer = envDGV.Parent as FlowLayoutPanel;
-			ComboBox envCmbox = parentContainer.Controls[2] as ComboBox;
+			ComboBox envCmbox = parentContainer.Controls[2].Controls[0] as ComboBox;
 			DataGridView serviceDGV = parentContainer.Controls[0] as DataGridView;
 
 			int serviceIndex = serviceDGV.SelectedCells[0].RowIndex;
 			int envCombIndex = envCmbox.SelectedIndex;
 
-			int propCount = teams[0].services[serviceIndex].environment.matchingContents[envCombIndex].properties.Count;
+			int propCount = teams[0].services[serviceIndex].environments.matchingContent[envCombIndex].properties.Count;
 
 			for(int i = 0; i < teams.Count; i++)
 			{
 				if(envDGV.Rows.Count - 1 > propCount)
 				{
-					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties.Add(new Property());
+					teams[i].services[serviceIndex].environments.matchingContent[envCombIndex].properties.Add(new Property());
 				}
 
 				//figuring out which modified field needs to be changed
 				if (e.ColumnIndex.Equals(0))
-					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].name = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
+					teams[i].services[serviceIndex].environments.matchingContent[envCombIndex].properties[e.RowIndex].name = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
 				else
-					teams[i].services[serviceIndex].environment.matchingContents[envCombIndex].properties[e.RowIndex].value = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
+					teams[i].services[serviceIndex].environments.matchingContent[envCombIndex].properties[e.RowIndex].value = envDGV[e.ColumnIndex, e.RowIndex].Value.ToString();
 			}
 
 		}
@@ -242,6 +279,52 @@ namespace ScoringEngineTeamGenerator
 
 		}
 
+		private void EnvTbox_TextChanged(object sender, EventArgs e)
+		{
+			TextBox text = sender as TextBox;
+			ComboBox comboBox = text.Parent.Controls[0] as ComboBox;
+
+			int envCombIndex = comboBox.SelectedIndex;
+			int serviceIndex = (text.Parent.Parent.Controls[0] as DataGridView).SelectedRows[0].Index;
+
+			string newValue = text.Text;
+
+			for(int i = 0; i < teams.Count; i++)
+			{
+				teams[i].services[serviceIndex].environments.matchingContent[envCombIndex].matchContent = newValue;
+			}
+
+
+		}
+
+		private void AddNew_Click(object sender, EventArgs e)
+		{
+			Button add = sender as Button;
+			int serviceIndex = (add.Parent.Parent.Parent.Controls[0] as DataGridView).SelectedRows[0].Index;
+
+			for (int i = 0; i < teams.Count; i++)
+			{
+				MatchingContent mc = new MatchingContent();
+				mc.matchContent = "Please replace with desired matching content.";
+				teams[i].services[serviceIndex].environments.matchingContent.Add(mc);
+			}
+		}
+
+		private void DeleteCur_Click(object sender, EventArgs e)
+		{
+			Button del = sender as Button;
+			int serviceIndex = (del.Parent.Parent.Parent.Controls[0] as DataGridView).SelectedRows[0].Index;
+			int contentIndex = (del.Parent.Parent.Controls[0] as ComboBox).SelectedIndex;
+
+
+			for(int i = 0; i < teams.Count; i++)
+			{
+				teams[i].services[serviceIndex].environments.matchingContent.RemoveAt(contentIndex);
+			}
+
+		}
+
+
 		/*
 		 * 
 		 * 
@@ -263,7 +346,7 @@ namespace ScoringEngineTeamGenerator
 		
 		}
 
-		private Control[] GenerateKeyValueDuo(string key, string val)
+		private Control[] GenerateTextLabelDuo(string key, string val)
 		{
 			Label label = new Label();
 			TextBox text = new TextBox();
@@ -309,7 +392,9 @@ namespace ScoringEngineTeamGenerator
 
 			FlowLayoutPanel innerflp = new FlowLayoutPanel();
 			innerflp.FlowDirection = FlowDirection.LeftToRight;
-			innerflp.Width = tc_TeamTabs.Width;
+			innerflp.AutoSize = true;
+
+			//innerflp.Width = tc_TeamTabs.Width;
 
 			DataGridView serviceDGV = new DataGridView();
 			serviceDGV.Columns.Add("name", "Name");
@@ -349,9 +434,40 @@ namespace ScoringEngineTeamGenerator
 			
 			//THIS WONT WORK FIX IT WITH A DIFFERENT CONTROL
 			ComboBox envCmbox = new ComboBox();
-			envCmbox.Visible = false;
 			envCmbox.SelectedIndexChanged += EnvCmbox_SelectedIndexChanged;
 			//envCmbox.TextChanged += EnvCmbox_Leave;
+
+			TextBox envTbox = new TextBox();
+			envTbox.Multiline = true;
+			envTbox.Width = envCmbox.Width;
+			envTbox.Height = mainListBox.Height - envCmbox.Height;
+			envTbox.TextChanged += EnvTbox_TextChanged;
+
+			Button addNew = new Button();
+			addNew.Text = "Add";
+			addNew.Click += AddNew_Click;
+			addNew.Width = envCmbox.Width / 2;
+			addNew.Margin = Padding.Empty;
+
+			Button deleteCur = new Button();
+			deleteCur.Text = "Delete Selected";
+			deleteCur.Click += DeleteCur_Click;
+			deleteCur.Width = envCmbox.Width / 2;
+			deleteCur.Margin = Padding.Empty;
+
+			FlowLayoutPanel buttonFLP = new FlowLayoutPanel();
+			buttonFLP.Controls.AddRange(new Control[] { addNew, deleteCur });
+			buttonFLP.Margin = Padding.Empty;
+			buttonFLP.Padding = Padding.Empty;
+			
+
+			FlowLayoutPanel envFLP = new FlowLayoutPanel();
+			envFLP.Controls.AddRange(new Control[] { envCmbox, envTbox, buttonFLP });
+			envFLP.FlowDirection = FlowDirection.TopDown;
+			envFLP.AutoSize = true;
+			envFLP.Visible = false;
+
+			
 
 			DataGridView acctDGV = new DataGridView();
 			acctDGV.Columns.Add("Username", "Username");
@@ -366,15 +482,40 @@ namespace ScoringEngineTeamGenerator
 			
 			envDGV.Visible = false;
 
-			innerflp.Height = serviceDGV.Height;
+			//innerflp.Height = serviceDGV.Height;
 			//Modify the envListBox, it needs to be able to be modified, incase a new matching_content is created.
 			//											0			1			2			3			4
-			innerflp.Controls.AddRange(new Control[] { serviceDGV, mainListBox, envCmbox, acctDGV, envDGV});
+			innerflp.Controls.AddRange(new Control[] { serviceDGV, mainListBox, envFLP,  acctDGV, envDGV});
+
+			//The following are purely for seeing the controls spaces
+			innerflp.BackColor = Color.Purple;
+			buttonFLP.BackColor = Color.Red;
+			envFLP.BackColor = Color.Green;
+			
+
 
 			return innerflp;
 		}
 
-		
+		private void TeamGen_TeamNameTextChanged(object sender, EventArgs e)
+		{
+			TextBox textBox = sender as TextBox;
+
+			int teamIndex = tc_TeamTabs.TabPages.IndexOf(textBox.Parent.Parent as TabPage);
+
+			teams[teamIndex].Name = textBox.Text;
+			tc_TeamTabs.TabPages[teamIndex].Text = textBox.Text;
+
+		}
+
+		private void TeamGen_TeamColorTextChanged(object sender, EventArgs e)
+		{
+			TextBox textBox = sender as TextBox;
+
+			int teamIndex = tc_TeamTabs.TabPages.IndexOf(textBox.Parent.Parent as TabPage);
+
+			teams[teamIndex].Color = textBox.Text;
+		}
 
 		/*
 		 * 
@@ -390,17 +531,19 @@ namespace ScoringEngineTeamGenerator
 			//Get a sense of the local controls
 			ComboBox envCmbox = sender as ComboBox;
 			FlowLayoutPanel parentContainer = envCmbox.Parent as FlowLayoutPanel;
-			DataGridView envDGV = parentContainer.Controls[4] as DataGridView;
-			DataGridView serviceDGV = parentContainer.Controls[0] as DataGridView;
+			DataGridView envDGV = parentContainer.Parent.Controls[4] as DataGridView;
+			DataGridView serviceDGV = parentContainer.Parent.Controls[0] as DataGridView;
 
 			//envDGV.Visible = true;
 
 			//same logic as above, where the flp in this case is a child to the main flp within the tab
-			int teamIndex = tc_TeamTabs.TabPages.IndexOf(parentContainer.Parent.Parent as TabPage);
+			int teamIndex = tc_TeamTabs.TabPages.IndexOf(parentContainer.Parent.Parent.Parent as TabPage);
 			try
 			{
 				int serviceIndex = serviceDGV.SelectedCells[0].RowIndex;
-				List<Property> properties = teams[teamIndex].services[serviceIndex].environment.matchingContents[envCmbox.SelectedIndex].properties;
+				List<Property> properties = teams[teamIndex].services[serviceIndex].environments.matchingContent[envCmbox.SelectedIndex].properties;
+
+				(parentContainer.Controls[1] as TextBox).Text = envCmbox.Text;
 
 				if(envDGV.RowCount > 1)
 					envDGV.Rows.Clear();
@@ -424,7 +567,7 @@ namespace ScoringEngineTeamGenerator
 			//Get a sense of the local controls
 			DataGridView serviceDGV = (sender as DataGridView);
 			FlowLayoutPanel parentContainer = serviceDGV.Parent as FlowLayoutPanel;
-			ComboBox envCmbox = parentContainer.Controls[2] as ComboBox;
+			ComboBox envCmbox = parentContainer.Controls[2].Controls[0] as ComboBox;
 			DataGridView acctDGV = parentContainer.Controls[3] as DataGridView;
 			
 
@@ -434,13 +577,13 @@ namespace ScoringEngineTeamGenerator
 			try
 			{
 				int serviceIndex = serviceDGV.SelectedCells[0].RowIndex;
-				Environment serviceEnv = teams[teamIndex].services[serviceIndex].environment;
+				Environment serviceEnv = teams[teamIndex].services[serviceIndex].environments;
 				List<User> serviceAccts = teams[teamIndex].services[serviceIndex].accounts;
 
 				envCmbox.Items.Clear();
-				for (int i = 0; i < serviceEnv.matchingContents.Count; i++)
+				for (int i = 0; i < serviceEnv.matchingContent.Count; i++)
 				{
-					envCmbox.Items.Add(serviceEnv.matchingContents[i].matchContent);
+					envCmbox.Items.Add(serviceEnv.matchingContent[i].matchContent);
 				}
 				envCmbox.SelectedItem = envCmbox.Items[0];
 
@@ -463,21 +606,24 @@ namespace ScoringEngineTeamGenerator
 		private void MainListBox_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			ListBox mlb = sender as ListBox;
+			FlowLayoutPanel parentPanel = mlb.Parent as FlowLayoutPanel;
 
-			if(mlb.SelectedIndex == 0)
+			if (mlb.SelectedIndex == 0)
 			{//Accounts
-				(mlb.Parent as FlowLayoutPanel).Controls[3].Visible = true;
-				(mlb.Parent as FlowLayoutPanel).Controls[2].Visible = false;
-				(mlb.Parent as FlowLayoutPanel).Controls[4].Visible = false;
+				parentPanel.Controls[3].Visible = true;
+				parentPanel.Controls[2].Visible = false;
+				parentPanel.Controls[4].Visible = false;
 			}
 			else
 			{//Environment
-				(mlb.Parent as FlowLayoutPanel).Controls[2].Visible = true;
-				(mlb.Parent as FlowLayoutPanel).Controls[4].Visible = true;
+				parentPanel.Controls[2].Visible = true;
+				parentPanel.Controls[4].Visible = true;
 
-				(mlb.Parent as FlowLayoutPanel).Controls[3].Visible = false;
+				parentPanel.Controls[3].Visible = false;
 				
 			}
 		}
+
+		
 	}
 }

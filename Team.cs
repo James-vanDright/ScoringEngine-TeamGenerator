@@ -82,7 +82,7 @@ namespace ScoringEngineTeamGenerator
 							mc.properties.Add(property);
 						}
 					}
-					tmpService.environment.matchingContents.Add(mc);
+					tmpService.environments.matchingContent.Add(mc);
 
 				}
 

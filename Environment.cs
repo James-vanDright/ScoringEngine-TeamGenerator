@@ -10,7 +10,7 @@ namespace ScoringEngineTeamGenerator
 	 */
 	class Environment
 	{
-		public List<MatchingContent> matchingContents = new List<MatchingContent>();
+		public List<MatchingContent> matchingContent = new List<MatchingContent>();
 	}
 
 	class MatchingContent
