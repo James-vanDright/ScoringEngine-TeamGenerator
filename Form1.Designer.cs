@@ -53,7 +53,7 @@
 			this.btnTemplate.TabIndex = 0;
 			this.btnTemplate.Text = "Open Template";
 			this.btnTemplate.UseVisualStyleBackColor = true;
-			this.btnTemplate.Click += new System.EventHandler(this.btnTemplate_Click);
+			this.btnTemplate.Click += new System.EventHandler(this.BtnTemplate_Click);
 			// 
 			// tc_TeamTabs
 			// 
@@ -86,7 +86,7 @@
             0,
             0});
 			this.teamAmount.Visible = false;
-			this.teamAmount.ValueChanged += new System.EventHandler(this.teamAmount_ValueChanged);
+			this.teamAmount.ValueChanged += new System.EventHandler(this.TeamAmount_ValueChanged);
 			// 
 			// menuStrip1
 			// 
@@ -129,7 +129,7 @@
 			this.saveAsToolStripMenuItem1.Name = "saveAsToolStripMenuItem1";
 			this.saveAsToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
 			this.saveAsToolStripMenuItem1.Text = "Save &As";
-			this.saveAsToolStripMenuItem1.Click += new System.EventHandler(this.saveAsToolStripMenuItem1_Click);
+			this.saveAsToolStripMenuItem1.Click += new System.EventHandler(this.SaveAsToolStripMenuItem1_Click);
 			// 
 			// toolStripSeparator2
 			// 

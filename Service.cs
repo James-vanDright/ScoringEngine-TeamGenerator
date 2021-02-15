@@ -14,6 +14,6 @@ namespace ScoringEngineTeamGenerator
 		public string port;
 		public string points;
 		public List<User> accounts = new List<User>();
-		public Environment environments = new Environment();
+		public List<MatchContent> environments = new List<MatchContent>();
 	}
 }

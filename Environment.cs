@@ -6,16 +6,11 @@ using System.Threading.Tasks;
 
 namespace ScoringEngineTeamGenerator
 {
-	/* This specific group of classes relate to each services environment. 
-	 */
-	class Environment
-	{
-		public List<MatchingContent> matchingContent = new List<MatchingContent>();
-	}
+	// This specific group of classes relate to each services environment. 
 
-	class MatchingContent
+	class MatchContent
 	{
-		public string matchContent;
+		public string matchingContent;
 		public List<Property> properties = new List<Property>();
 	}
 

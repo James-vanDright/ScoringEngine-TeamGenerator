@@ -45,13 +45,14 @@ namespace ScoringEngineTeamGenerator
 				//Same idea applies to services
 				Dictionary<object, object> serviceObject = ((rootObject["services"] as List<object>)[i] as Dictionary<object, object>);
 
-				Service tmpService = new Service();
-
-				tmpService.name = serviceObject["name"] as string;
-				tmpService.checkName = serviceObject["check_name"] as string;
-				tmpService.host = serviceObject["host"] as string;
-				tmpService.port = serviceObject["port"] as string;
-				tmpService.points = serviceObject["points"] as string;
+				Service tmpService = new Service
+				{
+					name = serviceObject["name"] as string,
+					checkName = serviceObject["check_name"] as string,
+					host = serviceObject["host"] as string,
+					port = serviceObject["port"] as string,
+					points = serviceObject["points"] as string
+				};
 
 				if (serviceObject.ContainsKey("accounts"))
 				{
@@ -69,20 +70,24 @@ namespace ScoringEngineTeamGenerator
 				{
 					Dictionary<object, object> matchingObject = ((serviceObject["environments"] as List<object>)[j] as Dictionary<object, object>);
 
-					MatchingContent mc = new MatchingContent();
-					mc.matchContent = matchingObject["matching_content"] as string;
+					MatchContent mc = new MatchContent
+					{
+						matchingContent = matchingObject["matching_content"] as string
+					};
 					if (matchingObject.ContainsKey("properties"))
 					{
 						for (int h = 0; h < (matchingObject["properties"] as List<object>).Count; h++)
 						{
-							Property property = new Property();
-							property.name = ((matchingObject["properties"] as List<object>)[h] as Dictionary<object, object>)["name"] as string;
-							property.value = ((matchingObject["properties"] as List<object>)[h] as Dictionary<object, object>)["value"] as string;
+							Property property = new Property
+							{
+								name = ((matchingObject["properties"] as List<object>)[h] as Dictionary<object, object>)["name"] as string,
+								value = ((matchingObject["properties"] as List<object>)[h] as Dictionary<object, object>)["value"] as string
+							};
 
 							mc.properties.Add(property);
 						}
 					}
-					tmpService.environments.matchingContent.Add(mc);
+					tmpService.environments.Add(mc);
 
 				}
 
